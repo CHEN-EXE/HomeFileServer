@@ -68,8 +68,8 @@ def produce_wifi():
     wlan.active(True)
     
     # 联网配置
-    wifi_ssid = CONFIG.get('WIFI', 'CMCC-PRGC')
-    wifi_pwd = CONFIG.get('WIFIPWD', '5bt6h7sx')
+    wifi_ssid = CONFIG.get('WIFI', 'NoWIFI')
+    wifi_pwd = CONFIG.get('WIFIPWD', 'NOPWD')
     
     mixiot.wlan_connect(wifi_ssid, wifi_pwd)
     
@@ -228,8 +228,8 @@ def handle_upload(conn, data):
 
 def send_html(conn):
     # 获取配置
-    web_name = CONFIG.get('WebName', '云上存储')
-    iot_name = CONFIG.get('loTName', 'ESP32')
+    web_name = CONFIG.get('WebName', '云上存储(可能未配置)')
+    iot_name = CONFIG.get('loTName', '未知设备')
     
     conn.send(b'HTTP/1.0 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n\r\n')
     
