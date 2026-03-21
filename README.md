@@ -1,0 +1,2 @@
+# HomeFileServer
+一个面向ESP硬件平台的家庭文件共享web网页python程序，通过连接网络共享文件并支持下载和删除。
