@@ -1,8 +1,3 @@
 WIFI:请设置信息
 WIFIPWD:请设置信息
-RESIGENER:True
-WebName:请设置信息
-TOPCOLOR:请设置信息
-Upload_exec:5
-loTName:未配置设备信息
-Print_exec:家庭存储服务已经启动！
+RESIGER:False
