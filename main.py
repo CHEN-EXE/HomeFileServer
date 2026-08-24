@@ -211,7 +211,7 @@ def handle_setup(conn, data):
         top_color = params.get('TOPCOLOR', '#01b48d')
         iot_name = params.get('loTName', 'ESP32-C3')
         
-        if iot_name == '其他':
+        if iot_name == '其他' or iot_name == 'Other':
             iot_name = params.get('custom_iot', 'ESP')
             
         CONFIG['WebName'] = web_name
@@ -330,13 +330,15 @@ def send_html(conn):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>欢迎使用 HomeFileServer!</title>
+<title>HomeFileServer</title>
 <style>
 :root{--primary:''' + top_color.encode('utf-8') + b''';--background:#f5f5f5;--surface:#fff;--text:#212121;--text-secondary:#757575}
 *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif}
 body{background:var(--background);color:var(--text);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:16px}
 .card{background:var(--surface);border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,0.1);padding:24px;width:100%;max-width:400px}
-.title{font-size:22px;font-weight:600;color:var(--primary);margin-bottom:8px;text-align:center}
+.header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.lang-btn{padding:4px 8px;background:transparent;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:12px;color:var(--text-secondary)}
+.title{font-size:20px;font-weight:600;color:var(--primary);text-align:center;flex:1}
 .subtitle{font-size:14px;color:var(--text-secondary);margin-bottom:24px;text-align:center}
 .form-group{margin-bottom:16px}
 label{display:block;font-size:14px;font-weight:500;margin-bottom:6px;color:var(--text)}
@@ -350,36 +352,88 @@ input[type="text"]:focus,select:focus{border-color:var(--primary)}
 </head>
 <body>
 <div class="card">
-<div class="title">欢迎使用 HomeFileServer!</div>
-<div class="subtitle">请完成初始化配置以继续使用</div>
+<div class="header-row">
+<div class="title" data-i18n="w_title">欢迎使用 HomeFileServer!</div>
+<button class="lang-btn" onclick="toggleLang()">🌐 EN/中</button>
+</div>
+<div class="subtitle" data-i18n="w_subtitle">请完成初始化配置以继续使用</div>
 <form id="setupForm" onsubmit="submitSetup(event)">
 <div class="form-group">
-<label for="webName">家庭名称</label>
+<label for="webName" data-i18n="w_home">家庭名称</label>
 <input type="text" id="webName" name="WebName" value="''' + web_name.encode('utf-8') + b'''" placeholder="请输入家庭名称" required>
 </div>
 <div class="form-group">
-<label for="topColor">主题颜色</label>
+<label for="topColor" data-i18n="w_color">主题颜色</label>
 <input type="color" id="topColor" name="TOPCOLOR" value="''' + top_color.encode('utf-8') + b'''">
 </div>
 <div class="form-group">
-<label for="iotName">主机名称</label>
+<label for="iotName" data-i18n="w_host">主机名称</label>
 <select id="iotName" name="loTName" onchange="checkIotSelect(this)">
 <option value="ESP32-C3">ESP32-C3</option>
 <option value="ESP32-S3">ESP32-S3</option>
-<option value="其他">其他</option>
+<option value="其他" data-i18n="w_other">其他</option>
 </select>
 </div>
 <div class="form-group" id="customIotGroup">
-<label for="customIot">自定义主机名称</label>
+<label for="customIot" data-i18n="w_custom">自定义主机名称</label>
 <input type="text" id="customIot" name="custom_iot" placeholder="请输入主机名称">
 </div>
-<button type="submit" class="btn">下一步</button>
+<button type="submit" class="btn" data-i18n="w_next">下一步</button>
 </form>
 </div>
 <script>
+var i18n = {
+    zh: {
+        w_title: "欢迎使用 HomeFileServer!",
+        w_subtitle: "请完成初始化配置以继续使用",
+        w_home: "家庭名称",
+        w_color: "主题颜色",
+        w_host: "主机名称",
+        w_other: "其他",
+        w_custom: "自定义主机名称",
+        w_next: "下一步",
+        ph_home: "请输入家庭名称",
+        ph_custom: "请输入主机名称",
+        err_save: "配置保存失败",
+        err_net: "网络错误"
+    },
+    en: {
+        w_title: "Welcome to HomeFileServer!",
+        w_subtitle: "Please complete setup to continue",
+        w_home: "Family Name",
+        w_color: "Theme Color",
+        w_host: "Host Device",
+        w_other: "Other",
+        w_custom: "Custom Host Name",
+        w_next: "Next",
+        ph_home: "Enter family name",
+        ph_custom: "Enter host name",
+        err_save: "Failed to save config",
+        err_net: "Network error"
+    }
+};
+var curLang = localStorage.getItem("lang") || "zh";
+
+defApplyLang();
+
+function defApplyLang(){
+    document.querySelectorAll("[data-i18n]").forEach(function(el){
+        var k = el.getAttribute("data-i18n");
+        if(i18n[curLang][k]) el.textContent = i18n[curLang][k];
+    });
+    document.getElementById("webName").placeholder = i18n[curLang].ph_home;
+    document.getElementById("customIot").placeholder = i18n[curLang].ph_custom;
+}
+
+function toggleLang(){
+    curLang = curLang === "zh" ? "en" : "zh";
+    localStorage.setItem("lang", curLang);
+    defApplyLang();
+}
+
 function checkIotSelect(elem){
     var cg = document.getElementById("customIotGroup");
-    if(elem.value === "其他"){
+    if(elem.value === "其他" || elem.value === "Other"){
         cg.style.display = "block";
         document.getElementById("customIot").required = true;
     }else{
@@ -387,6 +441,7 @@ function checkIotSelect(elem){
         document.getElementById("customIot").required = false;
     }
 }
+
 function submitSetup(e){
     e.preventDefault();
     var form = document.getElementById("setupForm");
@@ -403,10 +458,10 @@ function submitSetup(e){
         if(r.ok){
             location.reload();
         }else{
-            alert("配置保存失败");
+            alert(i18n[curLang].err_save);
         }
     }).catch(function(){
-        alert("网络错误");
+        alert(i18n[curLang].err_net);
     });
 }
 </script>
@@ -478,16 +533,17 @@ body{background:var(--background);color:var(--text)}
 <button class="btn-icon" onclick="toggleDrawer()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em"><path fill="currentColor" d="M11.025 21.95q-1.9-.2-3.537-1.037t-2.863-2.175T2.7 15.675T2 12q0-3.925 2.613-6.75t6.412-3.2v2.025q-2.975.375-5 2.613T4 12t2.025 5.313t5 2.612zm0-4.95v-6.175l-2.6 2.6L7.025 12l5-5l5 5l-1.425 1.4l-2.575-2.575V17zm2 4.95v-2.025q1.1-.125 2.088-.55t1.812-1.075l1.425 1.45q-1.125.9-2.475 1.475t-2.85.725M16.9 5.7q-.825-.65-1.8-1.075t-2.075-.55V2.05q1.5.15 2.85.725T18.35 4.25zm2.85 12.625L18.325 16.9q.65-.825 1.075-1.812T19.95 13h2.025q-.15 1.5-.737 2.85t-1.488 2.475m.2-7.325q-.125-1.1-.55-2.087T18.325 7.1l1.425-1.425q.9 1.125 1.488 2.475t.737 2.85z"/></svg></button>
 <div class="appbar-title">''' + web_name.encode('utf-8') + b'''</div>
 <div class="appbar-subtitle">''' + iot_name.encode('utf-8') + b''' @ <span id="ip"></span></div>
+<button class="btn-icon" onclick="toggleLang()" style="font-size:12px;width:auto;padding:0 8px;margin-right: 5px;margin-left: 11px;border-radius:90px;border:1px solid #ccc;height:32px">🌐 EN/中</button>
 <button class="btn-icon" onclick="doRefresh()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em"><path fill="currentColor" d="M6 12.05q0 1.125.425 2.188T7.75 16.2l.25.25V15q0-.425.288-.712T9 14t.713.288T10 15v4q0 .425-.288.713T9 20H5q-.425 0-.712-.288T4 19t.288-.712T5 18h1.75l-.4-.35q-1.3-1.15-1.825-2.625T4 12.05Q4 9.7 5.2 7.787T8.425 4.85q.35-.2.738-.025t.512.575q.125.375-.012.75t-.488.575q-1.45.8-2.312 2.213T6 12.05m12-.1q0-1.125-.425-2.187T16.25 7.8L16 7.55V9q0 .425-.288.713T15 10t-.712-.288T14 9V5q0-.425.288-.712T15 4h4q.425 0 .713.288T20 5t-.288.713T19 6h-1.75l.4.35q1.225 1.225 1.788 2.663T20 11.95q0 2.35-1.2 4.263t-3.225 2.937q-.35.2-.737.025t-.513-.575q-.125-.375.013-.75t.487-.575q1.45-.8 2.313-2.212T18 11.95"/></svg></button>
 </div>
 
 <div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
 <div class="drawer" id="drawer">
-<div style="font-size:20px;font-weight:500;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid rgba(0,0,0,0.1)">上传文件</div>
+<div style="font-size:20px;font-weight:500;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid rgba(0,0,0,0.1)" data-i18n="upload_title">上传文件</div>
 <div class="upload-area" onclick="document.getElementById('fileInput').click()" ondrop="drop(event)" ondragover="over(event)" ondragleave="leave(event)">
 <div class="upload-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em"><path fill="currentColor" d="M6.5 20q-2.275 0-3.887-1.575T1 14.575q0-1.95 1.175-3.475T5.25 9.15q.625-2.3 2.5-3.725T12 4q2.925 0 4.963 2.038T19 11q1.725.2 2.863 1.488T23 15.5q0 1.875-1.312 3.188T18.5 20H13q-.825 0-1.412-.587T11 18v-5.15L9.4 14.4L8 13l4-4l4 4l-1.4 1.4l-1.6-1.55V18h5.5q1.05 0 1.775-.725T21 15.5t-.725-1.775T18.5 13H17v-2q0-2.075-1.463-3.538T12 6T8.463 7.463T7 11h-.5q-1.45 0-2.475 1.025T3 14.5t1.025 2.475T6.5 18H9v2zm5.5-7"/></svg></div>
-<div class="upload-text">点击或拖拽上传</div>
-<div class="upload-hint">支持中文与空格</div>
+<div class="upload-text" data-i18n="upload_text">点击或拖拽上传</div>
+<div class="upload-hint" data-i18n="upload_hint">支持中文与空格</div>
 </div>
 <input type="file" id="fileInput" onchange="doUpload(this.files[0])">
 </div>
@@ -496,11 +552,11 @@ body{background:var(--background);color:var(--text)}
 <div class="card">
 <div class="card-header">
 <span style="font-size:20px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em"><path fill="#eab308" d="M4 20q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h5.175q.4 0 .763.15t.637.425L12 6h8q.825 0 1.413.588T22 8v10q0 .825-.587 1.413T20 20z"/></svg></span>
-<div class="card-title">文件列表</div>
+<div class="card-title" data-i18n="file_list">文件列表</div>
 <span class="badge" id="count">0</span>
 </div>
 <div class="card-content">
-<div id="fileList"><div class="empty"><div class="empty-icon">📂</div><div>暂无文件</div></div></div>
+<div id="fileList"><div class="empty"><div class="empty-icon">📂</div><div data-i18n="no_files">暂无文件</div></div></div>
 </div>
 </div>
 </div>
@@ -509,11 +565,11 @@ body{background:var(--background);color:var(--text)}
 
 <div class="dialog" id="dialog" onclick="if(event.target==this)closeDialog()">
 <div class="dialog-content">
-<div class="dialog-title">删除文件</div>
+<div class="dialog-title" data-i18n="del_title">删除文件</div>
 <div class="dialog-text" id="dialogText"></div>
 <div class="dialog-actions">
-<button class="btn btn-text" onclick="closeDialog()">取消</button>
-<button class="btn btn-filled error" onclick="doDelete()">删除</button>
+<button class="btn btn-text" onclick="closeDialog()" data-i18n="cancel">取消</button>
+<button class="btn btn-filled error" onclick="doDelete()" data-i18n="delete">删除</button>
 </div>
 </div>
 </div>
@@ -523,8 +579,62 @@ body{background:var(--background);color:var(--text)}
     conn.send(html_part1)
     
     conn.send(b'''
+var i18n = {
+    zh: {
+        upload_title: "上传文件",
+        upload_text: "点击或拖拽上传",
+        upload_hint: "支持中文与空格",
+        file_list: "文件列表",
+        no_files: "暂无文件",
+        del_title: "删除文件",
+        cancel: "取消",
+        delete: "删除",
+        suc_upload: "上传成功",
+        err_upload: "上传失败",
+        suc_del: "已删除",
+        err_del: "删除失败",
+        err_load: "加载失败",
+        del_confirm_pre: "确定要删除 ",
+        del_confirm_suf: " 吗？"
+    },
+    en: {
+        upload_title: "Upload File",
+        upload_text: "Click or Drag to Upload",
+        upload_hint: "Supports spaces & UTF-8",
+        file_list: "File List",
+        no_files: "No files",
+        del_title: "Delete File",
+        cancel: "Cancel",
+        delete: "Delete",
+        suc_upload: "Uploaded successfully",
+        err_upload: "Upload failed",
+        suc_del: "Deleted",
+        err_del: "Delete failed",
+        err_load: "Failed to load",
+        del_confirm_pre: "Are you sure to delete ",
+        del_confirm_suf: "?"
+    }
+};
+
+var curLang = localStorage.getItem("lang") || "zh";
 var target=null;
+
 document.getElementById("ip").textContent=location.host;
+applyLang();
+
+function applyLang(){
+    document.querySelectorAll("[data-i18n]").forEach(function(el){
+        var k = el.getAttribute("data-i18n");
+        if(i18n[curLang][k]) el.textContent = i18n[curLang][k];
+    });
+}
+
+function toggleLang(){
+    curLang = curLang === "zh" ? "en" : "zh";
+    localStorage.setItem("lang", curLang);
+    applyLang();
+    loadFiles();
+}
 
 function toggleDrawer(){
     var d=document.getElementById("drawer");
@@ -575,7 +685,7 @@ function loadFiles(){
         var h="";
         document.getElementById("count").textContent=files.length;
         if(files.length==0){
-            h="<div class=\\"empty\\"><div class=\\"empty-icon\\">📂</div><div>暂无文件</div></div>";
+            h="<div class=\\"empty\\"><div class=\\"empty-icon\\">📂</div><div>"+i18n[curLang].no_files+"</div></div>";
         }else{
             for(var i=0;i<files.length;i++){
                 var f=files[i];
@@ -586,7 +696,7 @@ function loadFiles(){
         }
         document.getElementById("fileList").innerHTML=h;
     }).catch(function(e){
-        show("加载失败");
+        show(i18n[curLang].err_load);
     });
 }
 
@@ -599,11 +709,11 @@ function doUpload(file){
     var d=new FormData();
     d.append("file",file);
     fetch("/u",{method:"POST",body:d}).then(function(){
-        show("上传成功");
+        show(i18n[curLang].suc_upload);
         toggleDrawer();
         loadFiles();
     }).catch(function(){
-        show("上传失败");
+        show(i18n[curLang].err_upload);
     });
 }
 
@@ -613,7 +723,7 @@ function downloadFile(n){
 
 function askDelete(n){
     target=n;
-    document.getElementById("dialogText").textContent="确定要删除 "+decodeURIComponent(n)+" 吗？";
+    document.getElementById("dialogText").textContent=i18n[curLang].del_confirm_pre+decodeURIComponent(n)+i18n[curLang].del_confirm_suf;
     document.getElementById("dialog").classList.add("show");
 }
 
@@ -625,10 +735,10 @@ function closeDialog(){
 function doDelete(){
     if(!target)return;
     fetch("/x/"+target).then(function(){
-        show("已删除");
+        show(i18n[curLang].suc_del);
         loadFiles();
     }).catch(function(){
-        show("删除失败");
+        show(i18n[curLang].err_del);
     });
     closeDialog();
 }
